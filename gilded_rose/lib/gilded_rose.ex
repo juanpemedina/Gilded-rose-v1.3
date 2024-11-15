@@ -6,19 +6,14 @@ defmodule GildedRose do
   def update_quality(items) do
     Enum.map(items, &update_item/1)
   end
+  defp decrement_quality(%{name: "Sulfuras, Hand of Ragnaros"} = item), do: item
+  defp decrement_quality(%{quality: 0} = item), do: item
+  defp decrement_quality(item), do: %{item | quality: item.quality - 1}
 
   def update_item(item) do
     item = cond do
       item.name != "Aged Brie" && item.name != "Backstage passes to a TAFKAL80ETC concert" ->
-        if item.quality > 0 do
-          if item.name != "Sulfuras, Hand of Ragnaros" do
-            %{item | quality: item.quality - 1}
-          else
-            item
-          end
-        else
-          item
-        end
+      decrement_quality(item)
       true ->
         cond do
           item.quality < 50 ->
