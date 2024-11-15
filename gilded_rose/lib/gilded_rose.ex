@@ -1,78 +1,61 @@
 defmodule GildedRose do
-  # Example
-  # update_quality([%Item{name: "Backstage passes to a TAFKAL80ETC concert", sell_in: 9, quality: 1}])
-  # => [%Item{name: "Backstage passes to a TAFKAL80ETC concert", sell_in: 8, quality: 3}]
-
-  def update_quality(items) do
-    Enum.map(items, &update_item/1)
-  end
-  defp decrement_quality(%{name: "Sulfuras, Hand of Ragnaros"} = item), do: item
-  defp decrement_quality(%{quality: 0} = item), do: item
-  defp decrement_quality(item), do: %{item | quality: item.quality - 1}
-
+  # Función que actualiza la calidad de los items
   def update_item(item) do
-    item = cond do
-      item.name != "Aged Brie" && item.name != "Backstage passes to a TAFKAL80ETC concert" ->
-      decrement_quality(item)
-      true ->
-        cond do
-          item.quality < 50 ->
-            item = %{item | quality: item.quality + 1}
-            cond do
-              item.name == "Backstage passes to a TAFKAL80ETC concert" ->
-                item = cond do
-                  item.sell_in < 11 ->
-                    cond do
-                      item.quality < 50 ->
-                        %{item | quality: item.quality + 1}
-                      true -> item
-                    end
-                  true -> item
-                end
-                cond do
-                  item.sell_in < 6 ->
-                    cond do
-                      item.quality < 50 ->
-                        %{item | quality: item.quality + 1}
-                      true -> item
-                    end
-                  true -> item
-                end
-              true -> item
-            end
-          true -> item
-        end
-    end
-    item = cond do
-      item.name != "Sulfuras, Hand of Ragnaros" ->
-        %{item | sell_in: item.sell_in - 1}
-      true -> item
-    end
     cond do
-      item.sell_in < 0 ->
-        cond do
-          item.name != "Aged Brie" ->
-            cond do
-              item.name != "Backstage passes to a TAFKAL80ETC concert" ->
-                cond do
-                  item.quality > 0 ->
-                    cond do
-                      item.name != "Sulfuras, Hand of Ragnaros" ->
-                        %{item | quality: item.quality - 1}
-                      true -> item
-                    end
-                  true -> item
-                end
-              true -> %{item | quality: item.quality - item.quality}
-            end
-          true ->
-            cond do
-              item.quality < 50 ->
-                %{item | quality: item.quality + 1}
-              true -> item
-            end
-        end
-      true -> item
+      item.name == "Aged Brie" -> 
+        update_aged_brie(item)
+
+      item.name == "Backstage passes to a TAFKAL80ETC concert" -> 
+        increment_backstage_quality(item)
+
+      item.name == "Sulfuras, Hand of Ragnaros" -> 
+        item
+
+      item.name == "Conjured" -> 
+        update_conjured_item(item)
+
+      true -> 
+        update_normal_item(item)
     end
+  end
+
+  # Actualización para Aged Brie
+  defp update_aged_brie(%{quality: quality, sell_in: sell_in} = item) do
+    new_quality =
+      if sell_in <= 0 do
+        # Incrementa la calidad en 2 si sell_in es menor o igual a 0
+        min(50, quality + 2)
+      else
+        # Incrementa la calidad en 1 si sell_in es mayor a 0
+        min(50, quality + 1)
+      end
+
+    # Regresa el nuevo item con la calidad actualizada y el sell_in decrecido
+    %{item | quality: new_quality, sell_in: sell_in - 1}
+  end
+
+  # Incrementa la calidad de Backstage passes
+  defp increment_backstage_quality(%{name: "Backstage passes to a TAFKAL80ETC concert", sell_in: sell_in, quality: quality} = item) do
+    new_quality =
+      cond do
+        sell_in <= 0 -> 0
+        sell_in <= 5 -> min(50, quality + 3)
+        sell_in <= 10 -> min(50, quality + 2)
+        true -> min(50, quality + 1)
+      end
+
+    %{item | quality: new_quality, sell_in: sell_in - 1}
+  end
+
+  # Actualiza los items Conjured
+  defp update_conjured_item(%{quality: quality, sell_in: sell_in} = item) do
+    new_quality = max(0, quality - 2)
+    %{item | quality: new_quality, sell_in: sell_in - 1}
+  end
+
+  # Actualiza items normales
+  defp update_normal_item(%{quality: quality, sell_in: sell_in} = item) do
+    new_quality = max(0, quality - 1)
+    %{item | quality: new_quality, sell_in: sell_in - 1}
   end
 end
